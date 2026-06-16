@@ -52,5 +52,6 @@
     Tanya Egorova
     <span>coming soon</span>
   </div>
+<audio id="bgMusic" loop preload="auto"><source src="/morgan-ambient-calm-ambient-dreamscape-529861.mp3" type="audio/mpeg"></audio><button id="soundToggle" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(4px)">SOUND</button><script>const audio=document.getElementById("bgMusic");const btn=document.getElementById("soundToggle");let playing=false;btn.addEventListener("click",function(){if(!playing){audio.play();btn.textContent="STOP";playing=true;}else{audio.pause();btn.textContent="SOUND";playing=false;}});</script>
 </body>
 </html>
