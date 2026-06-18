@@ -53,5 +53,48 @@
     <span>coming soon</span>
   </div>
 <audio id="bgMusic" loop preload="auto"><source src="/morgan-ambient-calm-ambient-dreamscape-529861.mp3" type="audio/mpeg"></audio><button id="soundToggle" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(4px)">SOUND</button><script>const audio=document.getElementById("bgMusic");const btn=document.getElementById("soundToggle");let playing=false;btn.addEventListener("click",function(){if(!playing){audio.play();btn.textContent="STOP";playing=true;}else{audio.pause();btn.textContent="SOUND";playing=false;}});</script>
+<style>
+#butterflies{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden}
+.butterfly{position:absolute;width:28px;height:24px;opacity:0;will-change:transform}
+.butterfly svg{width:100%;height:100%;display:block}
+.wing{transform-origin:50% 50%;animation:flap 0.45s ease-in-out infinite alternate}
+@keyframes flap{0%{transform:scaleX(1)}100%{transform:scaleX(0.45)}}
+@media (prefers-reduced-motion: reduce){.butterfly{display:none}}
+</style>
+<div id="butterflies"></div>
+<script>
+(function(){
+if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+var colors=['#e6a4c0','#e8c074','#b8a4d4','#9fc9b5','#f0e0a8','#e6a4c0'];
+var container=document.getElementById('butterflies');
+function makeButterfly(color){
+var el=document.createElement('div');
+el.className='butterfly';
+el.innerHTML='<svg viewBox="0 0 28 24"><g class="wing"><path d="M14 12 C10 2 0 0 2 8 C3 14 9 14 14 12 Z" fill="'+color+'"/></g><g class="wing" style="transform:scaleX(-1)"><path d="M14 12 C10 2 0 0 2 8 C3 14 9 14 14 12 Z" fill="'+color+'"/></g><rect x="13" y="10" width="2" height="6" fill="#5a4a3a"/></svg>';
+container.appendChild(el);
+return el;
+}
+function flightLoop(el){
+var startX=Math.random()*100;
+var endX=Math.max(0,Math.min(100,startX+(Math.random()*40-20)));
+var midX=(startX+endX)/2+(Math.random()*20-10);
+var duration=8000+Math.random()*7000;
+var delay=Math.random()*6000;
+el.style.left=startX+'vw';
+el.style.top='105vh';
+el.style.opacity='0';
+setTimeout(function(){
+var anim=el.animate([
+{transform:'translate(0,0) rotate(0deg)',opacity:0,offset:0},
+{transform:'translate(0,0) rotate(0deg)',opacity:0.85,offset:0.06},
+{transform:'translate('+(midX-startX)+'vw,-60vh) rotate('+(Math.random()*20-10)+'deg)',opacity:0.85,offset:0.5},
+{transform:'translate('+(endX-startX)+'vw,-115vh) rotate('+(Math.random()*20-10)+'deg)',opacity:0,offset:1}
+],{duration:duration,easing:'ease-in-out',fill:'forwards'});
+anim.onfinish=function(){flightLoop(el)};
+},delay);
+}
+colors.forEach(function(c){flightLoop(makeButterfly(c))});
+})();
+</script>
 </body>
 </html>
