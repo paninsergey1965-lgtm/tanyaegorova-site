@@ -22,6 +22,21 @@
       background-position: center top;
       filter: brightness(0.72);
     }
+    .gradient-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(120deg, #e6a4c0, #e8c074, #b8a4d4, #9fc9b5, #e6a4c0);
+      background-size: 300% 300%;
+      animation: gradientShift 18s ease-in-out infinite;
+      mix-blend-mode: soft-light;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
     .name {
       position: relative;
       z-index: 1;
@@ -48,6 +63,7 @@
 </head>
 <body>
   <div class="bg"></div>
+  <div class="gradient-overlay"></div>
   <div class="name">
     Tanya Egorova
     <span>coming soon</span>
