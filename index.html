@@ -49,6 +49,9 @@
       text-align: center;
       text-shadow: 0 2px 40px rgba(0,0,0,0.5);
       margin-bottom: 40vh;
+      opacity: 0;
+      transform: translateY(24px);
+      animation: fadeInUp 1.8s ease-out 0.4s forwards;
     }
     .name span {
       display: block;
@@ -58,6 +61,12 @@
       color: rgba(255,255,255,0.7);
       font-family: 'Helvetica Neue', Arial, sans-serif;
       font-weight: 300;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: fadeInUp 1.8s ease-out 1.3s forwards;
+    }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
