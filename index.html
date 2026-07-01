@@ -506,5 +506,114 @@ if (modal) {
   });
 }
 </script>
+<!-- === WORLD CLOCK + CRYPTO === -->
+<div class="tw-card" id="clockCard">
+<div class="tw-title">World Clock</div>
+<div class="tw-clock-row">
+<div class="tw-clock-city"><span class="tw-clock-time" id="clkLondon">--:--</span><span class="tw-clock-label">London</span></div>
+<div class="tw-clock-city"><span class="tw-clock-time" id="clkBeijing">--:--</span><span class="tw-clock-label">Beijing</span></div>
+<div class="tw-clock-city"><span class="tw-clock-time" id="clkBangkok">--:--</span><span class="tw-clock-label">Bangkok</span></div>
+<div class="tw-clock-city"><span class="tw-clock-time" id="clkBali">--:--</span><span class="tw-clock-label">Bali</span></div>
+<div class="tw-clock-city"><span class="tw-clock-time" id="clkDelhi">--:--</span><span class="tw-clock-label">Delhi</span></div>
+<div class="tw-clock-city"><span class="tw-clock-time" id="clkMoscow">--:--</span><span class="tw-clock-label">Moscow</span></div>
+</div>
+</div>
+<div class="tw-card" id="cryptoCard">
+<div class="tw-title">Crypto</div>
+<div class="tw-crypto-row" id="cryptoTon"><span class="tw-crypto-name">TON</span><span class="tw-crypto-price">--</span><span class="tw-crypto-sub">--</span></div>
+<div class="tw-crypto-row" id="cryptoBtc"><span class="tw-crypto-name">BTC</span><span class="tw-crypto-price">--</span><span class="tw-crypto-sub">--</span></div>
+<div class="tw-crypto-updated" id="cryptoUpdated"></div>
+</div>
+<style>
+.tw-card{background:rgba(255,255,255,.22);
+backdrop-filter:blur(14px);
+-webkit-backdrop-filter:blur(14px);
+border:1px solid rgba(255,255,255,.35);
+border-radius:20px;padding:18px 20px;
+margin:12px auto;max-width:340px;
+color:rgba(40,35,55,.9);font-family:inherit;
+box-shadow:0 8px 32px rgba(120,90,160,.12);
+animation:fadeInUp 4.5s ease both}
+.tw-title{font-size:11px;letter-spacing:.22em;
+text-transform:uppercase;opacity:.65;margin-bottom:12px}
+.tw-clock-row{display:grid;
+grid-template-columns:repeat(3,1fr);gap:14px 8px}
+.tw-clock-city{display:flex;
+flex-direction:column;align-items:center}
+.tw-clock-time{font-size:22px;font-weight:300;
+font-variant-numeric:tabular-nums;letter-spacing:.03em}
+.tw-clock-label{font-size:11px;opacity:.6;margin-top:4px}
+.tw-crypto-row{display:flex;align-items:baseline;
+justify-content:space-between;padding:6px 0}
+.tw-crypto-name{font-size:13px;font-weight:600;
+letter-spacing:.08em;width:44px}
+.tw-crypto-price{font-size:18px;font-weight:300;
+font-variant-numeric:tabular-nums}
+.tw-crypto-sub{font-size:12px;opacity:.6;
+font-variant-numeric:tabular-nums;
+min-width:88px;text-align:right}
+.tw-crypto-updated{font-size:10px;opacity:.45;
+margin-top:8px;text-align:right}
+</style>
+<script>
+(function(){
+var c=[
+{id:'clkLondon',tz:'Europe/London'},
+{id:'clkBeijing',tz:'Asia/Shanghai'},
+{id:'clkBangkok',tz:'Asia/Bangkok'},
+{id:'clkBali',tz:'Asia/Makassar'},
+{id:'clkDelhi',tz:'Asia/Kolkata'},
+{id:'clkMoscow',tz:'Europe/Moscow'}
+];
+function t(){
+var n=new Date();
+c.forEach(function(x){
+var e=document.getElementById(x.id);
+if(e)e.textContent=new Intl.DateTimeFormat('ru-RU',
+{hour:'2-digit',minute:'2-digit',timeZone:x.tz}
+).format(n);
+});
+}
+t();
+setTimeout(function(){
+t();
+setInterval(t,60000);
+},(60-new Date().getSeconds())*1000);
+})();
+(function(){
+var U='https://api.coingecko.com/api/v3/simple/price'+
+'?ids=the-open-network,bitcoin&vs_currencies=usd,rub';
+function f(n,c){
+if(n==null)return'--';
+var o=n>=1000?{maximumFractionDigits:0}:
+{maximumFractionDigits:2};
+return new Intl.NumberFormat('ru-RU',o).format(n)+' '+c;
+}
+function s(id,d){
+var r=document.getElementById(id);
+if(!r||!d)return;
+r.querySelector('.tw-crypto-price').textContent=f(d.usd,'$');
+r.querySelector('.tw-crypto-sub').textContent=f(d.rub,'RUB');
+}
+function l(){
+fetch(U).then(function(r){
+if(!r.ok)throw 0;
+return r.json();
+}).then(function(j){
+s('cryptoTon',j['the-open-network']);
+s('cryptoBtc',j['bitcoin']);
+var u=document.getElementById('cryptoUpdated');
+if(u)u.textContent='upd '+
+new Intl.DateTimeFormat('ru-RU',
+{hour:'2-digit',minute:'2-digit'}).format(new Date());
+}).catch(function(){
+var u=document.getElementById('cryptoUpdated');
+if(u)u.textContent='offline';
+});
+}
+l();
+setInterval(l,300000);
+})();
+</script>
 </body>
 </html>
