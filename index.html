@@ -101,7 +101,48 @@
     @keyframes fadeInUp {
       to { opacity: 1; transform: translateY(0); }
     }
-  </style>
+  .speed-link { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+    .speed-modal {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(10,8,14,0.85);
+      backdrop-filter: blur(12px);
+      display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column;
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+    .speed-modal.open { display: flex; opacity: 1; }
+    .speed-modal-close {
+      position: absolute; top: 24px; right: 24px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; font-size: 20px; cursor: pointer;
+    }
+    .speed-title {
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #fff; letter-spacing: 0.2em; text-transform: uppercase;
+      font-size: 0.9rem; opacity: 0.6; margin-bottom: 8px;
+    }
+    .speed-gauge-wrap { position: relative; width: min(70vw, 280px); }
+    .speed-value {
+      position: absolute; top: 58%; left: 50%; transform: translate(-50%,-50%);
+      text-align: center; color: #fff;
+      font-family: Georgia, serif;
+    }
+    .speed-value .num { font-size: 2.4rem; display: block; }
+    .speed-value .unit { font-size: 0.7rem; opacity: 0.55; letter-spacing: 0.15em; }
+    .speed-stats {
+      margin-top: 18px; display: flex; gap: 28px;
+      color: rgba(255,255,255,0.6); font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .speed-stats b { color: #fff; font-weight: 400; }
+    .speed-phase {
+      margin-top: 14px; color: rgba(255,255,255,0.4);
+      font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.7rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+    }
+</style>
 </head>
 <body>
   <div class="swing-stage">
@@ -112,7 +153,7 @@
     Tanya Egorova
     <span>coming soon</span>
       <span id="weather-widget" class="weather"></span>
-      <span id="speed-widget" class="weather"></span>
+      <span id="speed-widget" class="weather speed-link">SPEED TEST</span>
   </div>
 <audio id="bgMusic" loop preload="auto"><source src="/morgan-ambient-calm-ambient-dreamscape-529861.mp3" type="audio/mpeg"></audio><button id="soundToggle" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(4px)">SOUND</button><script>const audio=document.getElementById("bgMusic");const btn=document.getElementById("soundToggle");let playing=false;btn.addEventListener("click",function(){if(!playing){audio.play();btn.textContent="STOP";playing=true;}else{audio.pause();btn.textContent="SOUND";playing=false;}});</script>
 <style>
@@ -172,40 +213,137 @@ fetch('/api/weather')
   })
   .catch(function(){});
 
-async function runSpeedTest() {
-  var el = document.getElementById('speed-widget');
+</script>
+<div class="speed-modal" id="speedModal">
+  <button class="speed-modal-close" id="speedModalClose">&times;</button>
+  <div class="speed-title">Speed Test</div>
+  <div class="speed-gauge-wrap">
+    <svg viewBox="0 0 200 120" width="100%">
+      <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="10" stroke-linecap="round"/>
+      <path id="gaugeArc" d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+      <defs>
+        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#e6a4c0"/>
+          <stop offset="50%" stop-color="#e8c074"/>
+          <stop offset="100%" stop-color="#9fc9b5"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="speed-value">
+      <span class="num" id="gaugeNum">0.0</span>
+      <span class="unit">Мбит/с</span>
+    </div>
+  </div>
+  <div class="speed-phase" id="speedPhase">готовимся&hellip;</div>
+  <div class="speed-stats">
+    <span>Ping <b id="statPing">&mdash;</b> мс</span>
+    <span>&darr; <b id="statDown">&mdash;</b></span>
+    <span>&uarr; <b id="statUp">&mdash;</b></span>
+  </div>
+</div>
+<script>
+var modal = document.getElementById('speedModal');
+var closeBtn = document.getElementById('speedModalClose');
+var link = document.getElementById('speed-widget') || document.querySelector('.speed-link');
+var arc = document.getElementById('gaugeArc');
+var numEl = document.getElementById('gaugeNum');
+var phaseEl = document.getElementById('speedPhase');
+var pPing = document.getElementById('statPing');
+var pDown = document.getElementById('statDown');
+var pUp = document.getElementById('statUp');
+var ARC_LEN = 251.2;
+var MAX_SCALE = 120;
+
+function setGauge(value) {
+  var clamped = Math.max(0, Math.min(value, MAX_SCALE));
+  var frac = clamped / MAX_SCALE;
+  arc.style.strokeDashoffset = String(ARC_LEN * (1 - frac));
+  numEl.textContent = value.toFixed(1);
+}
+
+function animateTo(target, duration) {
+  return new Promise(function(resolve) {
+    var start = performance.now();
+    var from = parseFloat(numEl.textContent) || 0;
+    function step(now) {
+      var t = Math.min(1, (now - start) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      setGauge(from + (target - from) * eased);
+      if (t < 1) requestAnimationFrame(step); else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+async function runGaugeTest() {
+  setGauge(0);
+  phaseEl.textContent = 'ping';
+  pPing.textContent = '\u2014'; pDown.textContent = '\u2014'; pUp.textContent = '\u2014';
+
   try {
-    // 1. Ping: 5 small requests
     var pings = [];
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 6; i++) {
       var t0 = performance.now();
-      await fetch('/api/weather?ping=' + i, { cache: 'no-store' });
+      await fetch('/api/ping?x=' + i, { cache: 'no-store' });
       pings.push(performance.now() - t0);
     }
-    var avgPing = Math.round(pings.reduce(function(a,b){return a+b;},0) / pings.length);
+    pings.sort(function(a,b){return a-b;});
+    var avgPing = Math.round(pings.slice(0, 5).reduce(function(a,b){return a+b;},0) / 5);
+    pPing.textContent = String(avgPing);
 
-    // 2. Download: fetch 2MB file
+    phaseEl.textContent = 'скачивание';
     var dStart = performance.now();
-    var res = await fetch('/speedtest-2mb.bin?t=' + Date.now(), { cache: 'no-store' });
-    var blob = await res.blob();
+    var res = await fetch('/speedtest-6mb.bin?t=' + Date.now(), { cache: 'no-store' });
+    var reader = res.body.getReader();
+    var received = 0;
+    while (true) {
+      var chunk = await reader.read();
+      if (chunk.done) break;
+      received += chunk.value.length;
+      var elapsed = (performance.now() - dStart) / 1000;
+      if (elapsed > 0.05) {
+        var liveMbps = (received * 8) / elapsed / 1e6;
+        setGauge(liveMbps);
+      }
+    }
     var dTime = (performance.now() - dStart) / 1000;
-    var downloadMbps = ((blob.size * 8) / dTime / 1e6).toFixed(1);
+    var downloadMbps = (received * 8) / dTime / 1e6;
+    await animateTo(downloadMbps, 400);
+    pDown.textContent = downloadMbps.toFixed(1);
 
-    // 3. Upload: send 2MB back
+    phaseEl.textContent = 'отдача';
+    var blobRes = await fetch('/speedtest-6mb.bin?t=' + Date.now(), { cache: 'no-store' });
+    var blob = await blobRes.blob();
     var uStart = performance.now();
     await fetch('/api/upload-test', { method: 'POST', body: blob, cache: 'no-store' });
     var uTime = (performance.now() - uStart) / 1000;
-    var uploadMbps = ((blob.size * 8) / uTime / 1e6).toFixed(1);
+    var uploadMbps = (blob.size * 8) / uTime / 1e6;
+    await animateTo(uploadMbps, 500);
+    pUp.textContent = uploadMbps.toFixed(1);
 
-    if (el) {
-      el.textContent = 'ping ' + avgPing + ' ms \u00b7 \u2193 ' + downloadMbps + ' \u00b7 \u2191 ' + uploadMbps + ' \u041c\u0431\u0438\u0442/\u0441';
-      el.classList.add('visible');
-    }
+    phaseEl.textContent = 'готово';
   } catch (e) {
-    if (el) el.textContent = '';
+    phaseEl.textContent = 'ошибка теста';
   }
 }
-runSpeedTest();
+
+if (link) {
+  link.addEventListener('click', function() {
+    modal.classList.add('open');
+    runGaugeTest();
+  });
+}
+if (closeBtn) {
+  closeBtn.addEventListener('click', function() {
+    modal.classList.remove('open');
+  });
+}
+if (modal) {
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.classList.remove('open');
+  });
+}
 </script>
 </body>
 </html>
