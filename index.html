@@ -280,6 +280,7 @@ async function runGaugeTest() {
   setGauge(0);
   phaseEl.textContent = 'ping';
   pPing.textContent = '\u2014'; pDown.textContent = '\u2014'; pUp.textContent = '\u2014';
+  var STREAMS = 4;
 
   try {
     var pings = [];
@@ -293,32 +294,54 @@ async function runGaugeTest() {
     pPing.textContent = String(avgPing);
 
     phaseEl.textContent = 'скачивание';
+    var totalReceived = 0;
     var dStart = performance.now();
-    var res = await fetch('/speedtest-6mb.bin?t=' + Date.now(), { cache: 'no-store' });
-    var reader = res.body.getReader();
-    var received = 0;
-    while (true) {
-      var chunk = await reader.read();
-      if (chunk.done) break;
-      received += chunk.value.length;
+    var dInterval = setInterval(function() {
       var elapsed = (performance.now() - dStart) / 1000;
-      if (elapsed > 0.05) {
-        var liveMbps = (received * 8) / elapsed / 1e6;
-        setGauge(liveMbps);
+      if (elapsed > 0.05) setGauge((totalReceived * 8) / elapsed / 1e6);
+    }, 100);
+
+    var downloadOne = async function(idx) {
+      var res = await fetch('/speedtest-6mb.bin?t=' + Date.now() + '&s=' + idx, { cache: 'no-store' });
+      var reader = res.body.getReader();
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        totalReceived += chunk.value.length;
       }
-    }
+    };
+    var downloads = [];
+    for (var d = 0; d < STREAMS; d++) downloads.push(downloadOne(d));
+    await Promise.all(downloads);
+    clearInterval(dInterval);
+
     var dTime = (performance.now() - dStart) / 1000;
-    var downloadMbps = (received * 8) / dTime / 1e6;
+    var downloadMbps = (totalReceived * 8) / dTime / 1e6;
     await animateTo(downloadMbps, 400);
     pDown.textContent = downloadMbps.toFixed(1);
 
     phaseEl.textContent = 'отдача';
     var blobRes = await fetch('/speedtest-6mb.bin?t=' + Date.now(), { cache: 'no-store' });
     var blob = await blobRes.blob();
+
+    var totalSent = 0;
     var uStart = performance.now();
-    await fetch('/api/upload-test', { method: 'POST', body: blob, cache: 'no-store' });
+    var uInterval = setInterval(function() {
+      var elapsed = (performance.now() - uStart) / 1000;
+      if (elapsed > 0.05) setGauge((totalSent * 8) / elapsed / 1e6);
+    }, 100);
+
+    var uploadOne = async function() {
+      await fetch('/api/upload-test', { method: 'POST', body: blob, cache: 'no-store' });
+      totalSent += blob.size;
+    };
+    var uploads = [];
+    for (var u = 0; u < STREAMS; u++) uploads.push(uploadOne());
+    await Promise.all(uploads);
+    clearInterval(uInterval);
+
     var uTime = (performance.now() - uStart) / 1000;
-    var uploadMbps = (blob.size * 8) / uTime / 1e6;
+    var uploadMbps = (totalSent * 8) / uTime / 1e6;
     await animateTo(uploadMbps, 500);
     pUp.textContent = uploadMbps.toFixed(1);
 
@@ -327,7 +350,6 @@ async function runGaugeTest() {
     phaseEl.textContent = 'ошибка теста';
   }
 }
-
 if (link) {
   link.addEventListener('click', function() {
     modal.classList.add('open');
