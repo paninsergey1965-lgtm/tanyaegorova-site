@@ -46,6 +46,12 @@
       opacity: 0.55;
       pointer-events: none;
     }
+    body[data-weather="sunny"] .gradient-overlay { filter: saturate(1.2) brightness(1.08); }
+    body[data-weather="cloudy"] .gradient-overlay { filter: saturate(0.85) brightness(0.98); }
+    body[data-weather="rain"] .gradient-overlay { filter: saturate(0.75) brightness(0.9); animation-duration: 12s; }
+    body[data-weather="snow"] .gradient-overlay { filter: saturate(0.7) brightness(1.12); }
+    body[data-weather="storm"] .gradient-overlay { filter: saturate(0.7) brightness(0.8); animation-duration: 9s; }
+
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -79,6 +85,19 @@
       transform: translateY(14px);
       animation: fadeInUp 4.5s ease-out 3.8s forwards;
     }
+    .weather {
+      display: block;
+      font-size: clamp(0.65rem, 2.5vw, 0.95rem);
+      letter-spacing: 0.35em;
+      margin-top: 0.8em;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 300;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    .weather.visible { opacity: 1; }
+
     @keyframes fadeInUp {
       to { opacity: 1; transform: translateY(0); }
     }
@@ -92,6 +111,7 @@
   <div class="name">
     Tanya Egorova
     <span>coming soon</span>
+      <span id="weather-widget" class="weather"></span>
   </div>
 <audio id="bgMusic" loop preload="auto"><source src="/morgan-ambient-calm-ambient-dreamscape-529861.mp3" type="audio/mpeg"></audio><button id="soundToggle" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(4px)">SOUND</button><script>const audio=document.getElementById("bgMusic");const btn=document.getElementById("soundToggle");let playing=false;btn.addEventListener("click",function(){if(!playing){audio.play();btn.textContent="STOP";playing=true;}else{audio.pause();btn.textContent="SOUND";playing=false;}});</script>
 <style>
@@ -136,6 +156,20 @@ anim.onfinish=function(){flightLoop(el)};
 }
 colors.forEach(function(c){flightLoop(makeButterfly(c))});
 })();
+</script>
+<script>
+fetch('/api/weather')
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    document.body.setAttribute('data-weather', data.mood);
+    var el = document.getElementById('weather-widget');
+    if (el) {
+      var sign = data.temp > 0 ? '+' : '';
+      el.textContent = data.city + ', ' + sign + data.temp + '°';
+      el.classList.add('visible');
+    }
+  })
+  .catch(function(){});
 </script>
 </body>
 </html>
