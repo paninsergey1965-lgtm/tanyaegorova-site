@@ -142,6 +142,31 @@
       font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.7rem;
       letter-spacing: 0.15em; text-transform: uppercase;
     }
+.currency-row {
+      display: flex; align-items: center; gap: 12px; margin-top: 24px;
+    }
+    .currency-input, .currency-select {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff; font-family: Georgia, serif;
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 1rem;
+    }
+    .currency-input { width: 110px; text-align: right; }
+    .currency-select { flex: 1; -webkit-appearance: none; appearance: none; }
+    .currency-swap {
+      background: none; border: none; color: rgba(255,255,255,0.6);
+      font-size: 1.3rem; cursor: pointer; padding: 4px 8px;
+    }
+    .currency-result {
+      margin-top: 22px; text-align: center; color: #fff;
+      font-family: Georgia, serif; font-size: 2rem;
+    }
+    .currency-updated {
+      margin-top: 10px; color: rgba(255,255,255,0.35);
+      font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
 </style>
 </head>
 <body>
@@ -154,6 +179,7 @@
     <span>coming soon</span>
       <span id="weather-widget" class="weather"></span>
       <span id="speed-widget" class="weather speed-link">SPEED TEST</span>
+      <span id="currency-widget" class="weather speed-link">CURRENCY</span>
   </div>
 <audio id="bgMusic" loop preload="auto"><source src="/morgan-ambient-calm-ambient-dreamscape-529861.mp3" type="audio/mpeg"></audio><button id="soundToggle" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(4px)">SOUND</button><script>const audio=document.getElementById("bgMusic");const btn=document.getElementById("soundToggle");let playing=false;btn.addEventListener("click",function(){if(!playing){audio.play();btn.textContent="STOP";playing=true;}else{audio.pause();btn.textContent="SOUND";playing=false;}});</script>
 <style>
@@ -214,6 +240,21 @@ fetch('/api/weather')
   .catch(function(){});
 
 </script>
+<div class="speed-modal" id="currencyModal">
+  <button class="speed-modal-close" id="currencyModalClose">&times;</button>
+  <div class="speed-title">Currency</div>
+  <div class="currency-row">
+    <input class="currency-input" id="currAmount" type="number" value="100" inputmode="decimal">
+    <select class="currency-select" id="currFrom"></select>
+  </div>
+  <button class="currency-swap" id="currSwap">&#8645;</button>
+  <div class="currency-row">
+    <div class="currency-input" style="visibility:hidden">100</div>
+    <select class="currency-select" id="currTo"></select>
+  </div>
+  <div class="currency-result" id="currResult">&mdash;</div>
+  <div class="currency-updated" id="currUpdated"></div>
+</div>
 <div class="speed-modal" id="speedModal">
   <button class="speed-modal-close" id="speedModalClose">&times;</button>
   <div class="speed-title">Speed Test</div>
@@ -350,6 +391,104 @@ async function runGaugeTest() {
     phaseEl.textContent = 'ошибка теста';
   }
 }
+var CURRENCIES = [
+  ["rub", "Российский рубль"], ["usd", "Доллар США"], ["eur", "Евро"],
+  ["gbp", "Британский фунт"], ["cny", "Китайский юань"], ["chf", "Швейцарский франк"],
+  ["try", "Турецкая лира"], ["gel", "Грузинский лари"], ["aed", "Дирхам ОАЭ"],
+  ["kzt", "Казахстанский тенге"], ["thb", "Тайский бат"], ["inr", "Индийская рупия"],
+  ["jpy", "Японская иена"], ["amd", "Армянский драм"], ["ils", "Израильский шекель"],
+  ["rsd", "Сербский динар"]
+];
+
+var currModal = document.getElementById('currencyModal');
+var currLink = document.getElementById('currency-widget');
+var currClose = document.getElementById('currencyModalClose');
+var currFrom = document.getElementById('currFrom');
+var currTo = document.getElementById('currTo');
+var currAmount = document.getElementById('currAmount');
+var currSwap = document.getElementById('currSwap');
+var currResult = document.getElementById('currResult');
+var currUpdated = document.getElementById('currUpdated');
+var currRatesCache = {};
+
+function populateCurrencySelects() {
+  if (currFrom.options.length) return;
+  CURRENCIES.forEach(function(c) {
+    var o1 = document.createElement('option');
+    o1.value = c[0]; o1.textContent = c[1].toUpperCase ? c[0].toUpperCase() + ' — ' + c[1] : c[1];
+    currFrom.appendChild(o1);
+    var o2 = document.createElement('option');
+    o2.value = c[0]; o2.textContent = c[0].toUpperCase() + ' — ' + c[1];
+    currTo.appendChild(o2);
+  });
+  currFrom.value = 'rub';
+  currTo.value = 'usd';
+}
+
+async function fetchRates(base) {
+  if (currRatesCache[base]) return currRatesCache[base];
+  var urls = [
+    'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/' + base + '.min.json',
+    'https://latest.currency-api.pages.dev/v1/currencies/' + base + '.min.json'
+  ];
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var res = await fetch(urls[i]);
+      if (!res.ok) continue;
+      var data = await res.json();
+      currRatesCache[base] = data;
+      return data;
+    } catch (e) {}
+  }
+  throw new Error('rates unavailable');
+}
+
+async function runConversion() {
+  var from = currFrom.value, to = currTo.value;
+  var amount = parseFloat(currAmount.value) || 0;
+  currResult.textContent = '…';
+  try {
+    var data = await fetchRates(from);
+    var rate = data[from][to];
+    var value = amount * rate;
+    currResult.textContent = value.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + ' ' + to.toUpperCase();
+    currUpdated.textContent = '1 ' + from.toUpperCase() + ' = ' + rate.toFixed(4) + ' ' + to.toUpperCase();
+  } catch (e) {
+    currResult.textContent = 'ошибка';
+  }
+}
+
+var currDebounce;
+function scheduleConversion() {
+  clearTimeout(currDebounce);
+  currDebounce = setTimeout(runConversion, 250);
+}
+
+if (currLink) {
+  currLink.addEventListener('click', function() {
+    populateCurrencySelects();
+    currModal.classList.add('open');
+    runConversion();
+  });
+}
+if (currClose) {
+  currClose.addEventListener('click', function() { currModal.classList.remove('open'); });
+}
+if (currModal) {
+  currModal.addEventListener('click', function(e) {
+    if (e.target === currModal) currModal.classList.remove('open');
+  });
+}
+if (currAmount) currAmount.addEventListener('input', scheduleConversion);
+if (currFrom) currFrom.addEventListener('change', scheduleConversion);
+if (currTo) currTo.addEventListener('change', scheduleConversion);
+if (currSwap) currSwap.addEventListener('click', function() {
+  var tmp = currFrom.value;
+  currFrom.value = currTo.value;
+  currTo.value = tmp;
+  scheduleConversion();
+});
+
 if (link) {
   link.addEventListener('click', function() {
     modal.classList.add('open');
