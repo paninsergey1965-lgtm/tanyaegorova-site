@@ -506,7 +506,7 @@ if (modal) {
   });
 }
 </script>
-<!-- === WORLD CLOCK + CRYPTO === --><div id="twBtn" onclick="var w=document.getElementById(&quot;twWrap&quot;);var h=w.style.display===&quot;none&quot;;w.style.display=h?&quot;flex&quot;:&quot;none&quot;;this.textContent=h?&quot;CLOSE&quot;:&quot;INFO&quot;" style="position:fixed;left:24px;bottom:24px;z-index:41;width:72px;height:72px;border-radius:50%;background:rgba(20,25,20,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.15em;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">INFO</div><div id="twWrap" style="position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;max-width:94vw;display:none">
+<!-- === WORLD CLOCK + CRYPTO === --><div id="twBtn" onclick="var w=document.getElementById(&quot;twWrap&quot;);var h=w.style.display===&quot;none&quot;;w.style.display=h?&quot;flex&quot;:&quot;none&quot;;this.textContent=h?&quot;CLOSE&quot;:&quot;INFO&quot;;if(h&&window.twLoad)window.twLoad()" style="position:fixed;left:24px;bottom:24px;z-index:41;width:72px;height:72px;border-radius:50%;background:rgba(20,25,20,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.15em;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">INFO</div><div id="twWrap" style="position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;max-width:94vw;display:none">
 <div class="tw-card" id="clockCard">
 <div class="tw-title">World Clock</div>
 <div class="tw-clock-row">
@@ -612,8 +612,14 @@ var u=document.getElementById('cryptoUpdated');
 if(u)u.textContent='offline';
 });
 }
-l();
-setInterval(l,300000);
+window.twLoad=l;
+var twTries=0;
+var twTimer=setInterval(function(){
+if(twTries>10){clearInterval(twTimer);return}
+twTries++;
+var w=document.getElementById('twWrap');
+if(w&&w.style.display!=='none')l();
+},30000);
 })();
 </script>
 </body>
