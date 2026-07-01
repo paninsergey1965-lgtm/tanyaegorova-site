@@ -506,7 +506,7 @@ if (modal) {
   });
 }
 </script>
-<!-- === WORLD CLOCK + CRYPTO === --><div id="twWrap" style="position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;max-width:94vw">
+<!-- === WORLD CLOCK + CRYPTO === --><div id="twBtn" onclick="var w=document.getElementById(&quot;twWrap&quot;);var h=w.style.display===&quot;none&quot;;w.style.display=h?&quot;flex&quot;:&quot;none&quot;;this.textContent=h?&quot;CLOSE&quot;:&quot;INFO&quot;" style="position:fixed;left:24px;bottom:24px;z-index:41;width:72px;height:72px;border-radius:50%;background:rgba(20,25,20,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.15em;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">INFO</div><div id="twWrap" style="position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;max-width:94vw;display:none">
 <div class="tw-card" id="clockCard">
 <div class="tw-title">World Clock</div>
 <div class="tw-clock-row">
@@ -526,9 +526,9 @@ if (modal) {
 </div>
 </div>
 <style>
-.tw-card{background:rgba(255,255,255,.10);
-backdrop-filter:blur(6px);
--webkit-backdrop-filter:blur(6px);
+.tw-card{background:rgba(255,255,255,.30);
+backdrop-filter:blur(16px);
+-webkit-backdrop-filter:blur(16px);
 border:1px solid rgba(255,255,255,.35);
 border-radius:16px;padding:10px 14px;
 margin:5px auto;max-width:300px;
