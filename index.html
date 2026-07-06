@@ -295,6 +295,7 @@ function buildGauge() {
   var svgParts = [];
   svgParts.push('<svg viewBox="0 0 200 160">');
   svgParts.push('<rect class="gauge-bg" x="4" y="4" width="192" height="152" rx="10"/>');
+  svgParts.push('<image href="uv-meter.svg" x="4" y="4" width="192" height="152" preserveAspectRatio="none"/>');
 
   function toXY(deg, radius) {
     var rad = deg * Math.PI / 180;
