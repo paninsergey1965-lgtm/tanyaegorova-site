@@ -302,25 +302,8 @@ function buildGauge() {
     return { x: cx + radius * Math.cos(rad), y: cy - radius * Math.sin(rad) };
   }
 
-  for (var v = 0; v <= MAX_SCALE; v += majorStep) {
-    var deg = startDeg + (endDeg - startDeg) * (v / MAX_SCALE);
-    var isRed = v >= 100;
-    var p1 = toXY(deg, r);
-    var p2 = toXY(deg, r - 12);
-    var lbl = toXY(deg, r - 24);
-    svgParts.push('<line class="' + (isRed ? 'gauge-tick-red' : 'gauge-tick') + '" x1="' + p1.x.toFixed(1) + '" y1="' + p1.y.toFixed(1) + '" x2="' + p2.x.toFixed(1) + '" y2="' + p2.y.toFixed(1) + '"/>');
-    svgParts.push('<text class="' + (isRed ? 'gauge-label gauge-label-red' : 'gauge-label') + '" x="' + lbl.x.toFixed(1) + '" y="' + (lbl.y + 3).toFixed(1) + '">' + v + '</text>');
-  }
-
-  for (var vv = 0; vv <= MAX_SCALE; vv += majorStep / 4) {
-    if (vv % majorStep === 0) continue;
-    var deg2 = startDeg + (endDeg - startDeg) * (vv / MAX_SCALE);
-    var isRed2 = vv >= 100;
-    var q1 = toXY(deg2, r);
-    var q2 = toXY(deg2, r - 6);
-    svgParts.push('<line class="' + (isRed2 ? 'gauge-tick-red' : 'gauge-tick') + '" x1="' + q1.x.toFixed(1) + '" y1="' + q1.y.toFixed(1) + '" x2="' + q2.x.toFixed(1) + '" y2="' + q2.y.toFixed(1) + '"/>');
-  }
-
+  
+  
   svgParts.push('<line id="gaugeNeedle" class="gauge-needle" x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy - r + 14) + '"/>');
   svgParts.push('<circle class="gauge-pivot" cx="' + cx + '" cy="' + cy + '" r="4"/>');
   svgParts.push('</svg>');
