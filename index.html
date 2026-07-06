@@ -132,9 +132,6 @@
     .speed-gauge-wrap .gauge-label-red { fill:#e05252; }
     .speed-gauge-wrap .gauge-needle { stroke:#e05252; stroke-width:2; stroke-linecap:round; transition:none; }
     .speed-gauge-wrap .gauge-pivot { fill:#e05252; }
-    .speed-gauge-wrap .gauge-crown { stroke:#e05252; stroke-width:2; stroke-linejoin:round; }
-    .speed-gauge-wrap .gauge-sign { fill:rgba(255,255,255,0.85); font-size:14px; font-weight:700; text-anchor:middle; }
-    .speed-gauge-wrap .gauge-sign-red { fill:#e05252; }
     .speed-value {
       position: absolute; top: 58%; left: 50%; transform: translate(-50%,-50%);
       text-align: center; color: #fff;
@@ -322,24 +319,6 @@ function buildGauge() {
     var q2 = toXY(deg2, r - 6);
     svgParts.push('<line class="' + (isRed2 ? 'gauge-tick-red' : 'gauge-tick') + '" x1="' + q1.x.toFixed(1) + '" y1="' + q1.y.toFixed(1) + '" x2="' + q2.x.toFixed(1) + '" y2="' + q2.y.toFixed(1) + '"/>');
   }
-
-  function crownPoints(startV, endV, steps) {
-    var pts = [];
-    for (var i = 0; i <= steps; i++) {
-      var v = startV + (endV - startV) * (i / steps);
-      var deg = startDeg + (endDeg - startDeg) * (v / MAX_SCALE);
-      var radius = (i % 2 === 0) ? r + 12 : r + 4;
-      var p = toXY(deg, radius);
-      pts.push(p.x.toFixed(1) + ',' + p.y.toFixed(1));
-    }
-    return pts.join(' ');
-  }
-  svgParts.push('<polyline class="gauge-crown" points="' + crownPoints(100, 120, 16) + '" fill="none"/>');
-
-  var minusP = toXY(startDeg + (endDeg - startDeg) * (2 / MAX_SCALE), r + 22);
-  var plusP = toXY(startDeg + (endDeg - startDeg) * (118 / MAX_SCALE), r + 22);
-  svgParts.push('<text class="gauge-sign" x="' + minusP.x.toFixed(1) + '" y="' + (minusP.y + 3).toFixed(1) + '">-</text>');
-  svgParts.push('<text class="gauge-sign gauge-sign-red" x="' + plusP.x.toFixed(1) + '" y="' + (plusP.y + 3).toFixed(1) + '">+</text>');
 
   svgParts.push('<line id="gaugeNeedle" class="gauge-needle" x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy - r + 14) + '"/>');
   svgParts.push('<circle class="gauge-pivot" cx="' + cx + '" cy="' + cy + '" r="4"/>');
