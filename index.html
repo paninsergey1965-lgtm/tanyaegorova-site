@@ -286,6 +286,8 @@ var gaugeWrap = document.getElementById('speedGaugeWrap');
 var numEl = document.getElementById('gaugeNum');
 var needleEl = null;
 
+var ARC_LEN = 251.2;
+var MAX_SCALE = 120;
 function buildGauge() {
   var cx = 100, cy = 110, r = 80;
   var startDeg = 210, endDeg = -30;
@@ -341,8 +343,6 @@ var phaseEl = document.getElementById('speedPhase');
 var pPing = document.getElementById('statPing');
 var pDown = document.getElementById('statDown');
 var pUp = document.getElementById('statUp');
-var ARC_LEN = 251.2;
-var MAX_SCALE = 120;
 
 function setGauge(value) {
   setGaugeNeedle(value);
