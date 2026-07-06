@@ -124,6 +124,14 @@
       font-size: 0.9rem; opacity: 0.6; margin-bottom: 8px;
     }
     .speed-gauge-wrap { position: relative; width: min(70vw, 280px); }
+    .speed-gauge-wrap svg { width:100%; display:block; }
+    .speed-gauge-wrap .gauge-bg { fill:#111; }
+    .speed-gauge-wrap .gauge-tick { stroke:rgba(255,255,255,0.55); stroke-width:1.5; }
+    .speed-gauge-wrap .gauge-tick-red { stroke:#e05252; stroke-width:2; }
+    .speed-gauge-wrap .gauge-label { fill:rgba(255,255,255,0.75); font-size:9px; font-family:inherit; text-anchor:middle; }
+    .speed-gauge-wrap .gauge-label-red { fill:#e05252; }
+    .speed-gauge-wrap .gauge-needle { stroke:#e05252; stroke-width:2; stroke-linecap:round; transition:none; }
+    .speed-gauge-wrap .gauge-pivot { fill:#e05252; }
     .speed-value {
       position: absolute; top: 58%; left: 50%; transform: translate(-50%,-50%);
       text-align: center; color: #fff;
@@ -258,23 +266,10 @@ fetch('/api/weather')
 <div class="speed-modal" id="speedModal">
   <button class="speed-modal-close" id="speedModalClose">&times;</button>
   <div class="speed-title">Speed Test</div>
-  <div class="speed-gauge-wrap">
-    <svg viewBox="0 0 200 120" width="100%">
-      <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="10" stroke-linecap="round"/>
-      <path id="gaugeArc" d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round"
-            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
-      <defs>
-        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#e6a4c0"/>
-          <stop offset="50%" stop-color="#e8c074"/>
-          <stop offset="100%" stop-color="#9fc9b5"/>
-        </linearGradient>
-      </defs>
-    </svg>
-    <div class="speed-value">
-      <span class="num" id="gaugeNum">0.0</span>
-      <span class="unit">Мбит/с</span>
-    </div>
+  <div class="speed-gauge-wrap" id="speedGaugeWrap"></div>
+  <div class="speed-value">
+    <span class="num" id="gaugeNum">0.0</span>
+    <span class="unit">Мбит/с</span>
   </div>
   <div class="speed-phase" id="speedPhase">готовимся&hellip;</div>
   <div class="speed-stats">
@@ -287,8 +282,61 @@ fetch('/api/weather')
 var modal = document.getElementById('speedModal');
 var closeBtn = document.getElementById('speedModalClose');
 var link = document.getElementById('speed-widget') || document.querySelector('.speed-link');
-var arc = document.getElementById('gaugeArc');
+var gaugeWrap = document.getElementById('speedGaugeWrap');
 var numEl = document.getElementById('gaugeNum');
+var needleEl = null;
+
+function buildGauge() {
+  var cx = 100, cy = 110, r = 80;
+  var startDeg = 210, endDeg = -30;
+  var majorStep = 20;
+  var svgParts = [];
+  svgParts.push('<svg viewBox="0 0 200 140">');
+  svgParts.push('<rect class="gauge-bg" x="4" y="4" width="192" height="132" rx="10"/>');
+
+  function toXY(deg, radius) {
+    var rad = deg * Math.PI / 180;
+    return { x: cx + radius * Math.cos(rad), y: cy - radius * Math.sin(rad) };
+  }
+
+  for (var v = 0; v <= MAX_SCALE; v += majorStep) {
+    var deg = startDeg + (endDeg - startDeg) * (v / MAX_SCALE);
+    var isRed = v >= 100;
+    var p1 = toXY(deg, r);
+    var p2 = toXY(deg, r - 12);
+    var lbl = toXY(deg, r - 24);
+    svgParts.push('<line class="' + (isRed ? 'gauge-tick-red' : 'gauge-tick') + '" x1="' + p1.x.toFixed(1) + '" y1="' + p1.y.toFixed(1) + '" x2="' + p2.x.toFixed(1) + '" y2="' + p2.y.toFixed(1) + '"/>');
+    svgParts.push('<text class="' + (isRed ? 'gauge-label gauge-label-red' : 'gauge-label') + '" x="' + lbl.x.toFixed(1) + '" y="' + (lbl.y + 3).toFixed(1) + '">' + v + '</text>');
+  }
+
+  for (var vv = 0; vv <= MAX_SCALE; vv += majorStep / 4) {
+    if (vv % majorStep === 0) continue;
+    var deg2 = startDeg + (endDeg - startDeg) * (vv / MAX_SCALE);
+    var isRed2 = vv >= 100;
+    var q1 = toXY(deg2, r);
+    var q2 = toXY(deg2, r - 6);
+    svgParts.push('<line class="' + (isRed2 ? 'gauge-tick-red' : 'gauge-tick') + '" x1="' + q1.x.toFixed(1) + '" y1="' + q1.y.toFixed(1) + '" x2="' + q2.x.toFixed(1) + '" y2="' + q2.y.toFixed(1) + '"/>');
+  }
+
+  svgParts.push('<line id="gaugeNeedle" class="gauge-needle" x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy - r + 14) + '"/>');
+  svgParts.push('<circle class="gauge-pivot" cx="' + cx + '" cy="' + cy + '" r="4"/>');
+  svgParts.push('</svg>');
+
+  gaugeWrap.innerHTML = svgParts.join('');
+  needleEl = document.getElementById('gaugeNeedle');
+}
+
+buildGauge();
+
+function setGaugeNeedle(value) {
+  var cx = 100, cy = 110;
+  var startDeg = 210, endDeg = -30;
+  var clamped = Math.max(0, Math.min(value, MAX_SCALE));
+  var frac = clamped / MAX_SCALE;
+  var deg = startDeg + (endDeg - startDeg) * frac;
+  var rotate = 90 - deg;
+  if (needleEl) needleEl.setAttribute('transform', 'rotate(' + rotate.toFixed(2) + ' ' + cx + ' ' + cy + ')');
+}
 var phaseEl = document.getElementById('speedPhase');
 var pPing = document.getElementById('statPing');
 var pDown = document.getElementById('statDown');
@@ -297,9 +345,7 @@ var ARC_LEN = 251.2;
 var MAX_SCALE = 120;
 
 function setGauge(value) {
-  var clamped = Math.max(0, Math.min(value, MAX_SCALE));
-  var frac = clamped / MAX_SCALE;
-  arc.style.strokeDashoffset = String(ARC_LEN * (1 - frac));
+  setGaugeNeedle(value);
   numEl.textContent = value.toFixed(1);
 }
 
