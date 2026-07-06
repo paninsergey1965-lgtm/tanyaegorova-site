@@ -126,9 +126,9 @@
     .speed-gauge-wrap { position: relative; width: min(70vw, 280px); }
     .speed-gauge-wrap svg { width:100%; display:block; }
     .speed-gauge-wrap .gauge-bg { fill:#111; }
-    .speed-gauge-wrap .gauge-tick { stroke:rgba(255,255,255,0.55); stroke-width:1.5; }
+    .speed-gauge-wrap .gauge-tick { stroke:rgba(255,255,255,0.85); stroke-width:2.2; }
     .speed-gauge-wrap .gauge-tick-red { stroke:#e05252; stroke-width:2; }
-    .speed-gauge-wrap .gauge-label { fill:rgba(255,255,255,0.75); font-size:9px; font-family:inherit; text-anchor:middle; }
+    .speed-gauge-wrap .gauge-label { fill:rgba(255,255,255,0.95); font-size:13px; font-weight:600; font-family:inherit; text-anchor:middle; }
     .speed-gauge-wrap .gauge-label-red { fill:#e05252; }
     .speed-gauge-wrap .gauge-needle { stroke:#e05252; stroke-width:2; stroke-linecap:round; transition:none; }
     .speed-gauge-wrap .gauge-pivot { fill:#e05252; }
@@ -291,8 +291,8 @@ function buildGauge() {
   var startDeg = 210, endDeg = -30;
   var majorStep = 20;
   var svgParts = [];
-  svgParts.push('<svg viewBox="0 0 200 140">');
-  svgParts.push('<rect class="gauge-bg" x="4" y="4" width="192" height="132" rx="10"/>');
+  svgParts.push('<svg viewBox="0 0 200 160">');
+  svgParts.push('<rect class="gauge-bg" x="4" y="4" width="192" height="152" rx="10"/>');
 
   function toXY(deg, radius) {
     var rad = deg * Math.PI / 180;
