@@ -153,7 +153,7 @@
     }
 .hourly-wrap {
         margin-top: 6px; margin-bottom: 10px;
-        max-height: 140px; overflow-y: auto;
+        max-height: 140px; overflow-y: auto; -webkit-overflow-scrolling: touch;
         border-top: 1px solid rgba(255,255,255,0.1);
         padding-top: 6px;
       }
@@ -261,7 +261,8 @@ fetch('/api/weather')
     if (list) {
       list.innerHTML = data.map(function(c){
           var s = c.temp > 0 ? '+' : '';
-          var hrs = (c.hourly || []).slice(0, 12).map(function(h){
+          var upcoming = (c.hourly || []).filter(function(h){ return h.iso >= c.now; });
+          var hrs = upcoming.slice(0, 12).map(function(h){
             return '<div class="hour-row"><span>' + h.time + '</span><span>' + h.temp + '°</span><span>' + h.precipProb + '% ' + h.precipMm + 'mm</span></div>';
           }).join('');
           return '<div class="currency-row"><span>' + c.city + '</span><span>' + s + c.temp + '° (' + c.min + '°...' + c.max + '°)</span></div><div class="hourly-wrap">' + hrs + '</div>';

@@ -16,7 +16,7 @@ async function fetchCity({ city, lat, lon }) {
     `&current=temperature_2m,precipitation,weather_code,wind_speed_10m` +
     `&hourly=temperature_2m,precipitation_probability,precipitation,weather_code` +
     `&daily=temperature_2m_max,temperature_2m_min` +
-    `&timezone=auto&forecast_days=1`;
+    `&timezone=auto&forecast_days=2`;
 
   const r = await fetch(url);
   const d = await r.json();
@@ -27,7 +27,9 @@ async function fetchCity({ city, lat, lon }) {
     wind: d.current.wind_speed_10m,
     min: Math.round(d.daily.temperature_2m_min[0]),
     max: Math.round(d.daily.temperature_2m_max[0]),
+    now: d.current.time,
     hourly: d.hourly.time.map((t, i) => ({
+      iso: t,
       time: t.slice(11, 16),
       temp: Math.round(d.hourly.temperature_2m[i]),
       precipProb: d.hourly.precipitation_probability[i],
