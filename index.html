@@ -51,6 +51,10 @@
     body[data-weather="rain"] .gradient-overlay { filter: saturate(0.75) brightness(0.9); animation-duration: 12s; }
     body[data-weather="snow"] .gradient-overlay { filter: saturate(0.7) brightness(1.12); }
     body[data-weather="storm"] .gradient-overlay { filter: saturate(0.7) brightness(0.8); animation-duration: 9s; }
+      body[data-daytime="dawn"] .gradient-overlay { filter: sepia(0.25) saturate(1.15) brightness(1.05) hue-rotate(-8deg); }
+      body[data-daytime="day"] .gradient-overlay { filter: none; }
+      body[data-daytime="sunset"] .gradient-overlay { filter: sepia(0.35) saturate(1.3) brightness(0.95) hue-rotate(-12deg); }
+      body[data-daytime="night"] .gradient-overlay { filter: saturate(0.6) brightness(0.55) contrast(1.1) hue-rotate(6deg); }
 
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
@@ -246,7 +250,21 @@ colors.forEach(function(c){flightLoop(makeButterfly(c))});
 })();
 </script>
 <script>
-fetch('/api/weather')
+(function(){
+        function updateDaytime(){
+          var msk = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
+          var h = msk.getHours();
+          var phase = 'day';
+          if (h >= 5 && h < 8) phase = 'dawn';
+          else if (h >= 8 && h < 18) phase = 'day';
+          else if (h >= 18 && h < 21) phase = 'sunset';
+          else phase = 'night';
+          document.body.setAttribute('data-daytime', phase);
+        }
+        updateDaytime();
+        setInterval(updateDaytime, 60000);
+      })();
+      fetch('/api/weather')
   .then(function(r){ return r.json(); })
   .then(function(data){
     if (!Array.isArray(data) || data.length === 0) return;
