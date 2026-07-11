@@ -185,7 +185,7 @@
   <div class="name">
     Tanya Egorova
     <span>coming soon</span>
-      <span id="weather-widget" class="weather"></span>
+      <span id="weather-widget" class="weather speed-link"></span>
       <span id="speed-widget" class="weather speed-link">SPEED TEST</span>
       <span id="currency-widget" class="weather speed-link">CURRENCY</span>
   </div>
@@ -237,17 +237,40 @@ colors.forEach(function(c){flightLoop(makeButterfly(c))});
 fetch('/api/weather')
   .then(function(r){ return r.json(); })
   .then(function(data){
-    document.body.setAttribute('data-weather', data.mood);
+    if (!Array.isArray(data) || data.length === 0) return;
+    document.body.setAttribute('data-weather', data[0].mood);
     var el = document.getElementById('weather-widget');
     if (el) {
-      var sign = data.temp > 0 ? '+' : '';
-      el.textContent = data.city + ', ' + sign + data.temp + '°';
+      var sign = data[0].temp > 0 ? '+' : '';
+      el.textContent = data[0].city + ', ' + sign + data[0].temp + '°';
       el.classList.add('visible');
+    }
+    var list = document.getElementById('weatherList');
+    if (list) {
+      list.innerHTML = data.map(function(c){
+        var s = c.temp > 0 ? '+' : '';
+        return '<div class="currency-row"><span>' + c.city + '</span><span>' + s + c.temp + '° (' + c.min + '°...' + c.max + '°)</span></div>';
+      }).join('');
+    }
+    var wModal = document.getElementById('weatherModal');
+    var wLink = document.getElementById('weather-widget');
+    var wClose = document.getElementById('weatherModalClose');
+    if (wLink && wModal) {
+      wLink.addEventListener('click', function(){ wModal.classList.add('open'); });
+    }
+    if (wClose && wModal) {
+      wClose.addEventListener('click', function(){ wModal.classList.remove('open'); });
     }
   })
   .catch(function(){});
 
 </script>
+<div class="speed-modal" id="weatherModal">
+  <button class="speed-modal-close" id="weatherModalClose">&times;</button>
+  <div class="speed-title">Weather</div>
+  <div id="weatherList"></div>
+</div>
+
 <div class="speed-modal" id="currencyModal">
   <button class="speed-modal-close" id="currencyModalClose">&times;</button>
   <div class="speed-title">Currency</div>
