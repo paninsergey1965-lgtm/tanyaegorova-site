@@ -105,6 +105,7 @@
     .speed-modal {
       position: fixed; inset: 0; z-index: 10000;
       background: rgba(10,8,14,0.85);
+      color: #fff;
       backdrop-filter: blur(12px);
       display: none;
       align-items: center; justify-content: center;
@@ -150,7 +151,18 @@
       font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.7rem;
       letter-spacing: 0.15em; text-transform: uppercase;
     }
-.currency-row {
+.hourly-wrap {
+        margin-top: 6px; margin-bottom: 10px;
+        max-height: 140px; overflow-y: auto;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-top: 6px;
+      }
+      .hour-row {
+        display: flex; justify-content: space-between;
+        font-size: 0.75rem; color: rgba(255,255,255,0.7);
+        padding: 2px 4px;
+      }
+      .currency-row {
       display: flex; align-items: center; gap: 12px; margin-top: 24px;
     }
     .currency-input, .currency-select {
@@ -248,9 +260,12 @@ fetch('/api/weather')
     var list = document.getElementById('weatherList');
     if (list) {
       list.innerHTML = data.map(function(c){
-        var s = c.temp > 0 ? '+' : '';
-        return '<div class="currency-row"><span>' + c.city + '</span><span>' + s + c.temp + '° (' + c.min + '°...' + c.max + '°)</span></div>';
-      }).join('');
+          var s = c.temp > 0 ? '+' : '';
+          var hrs = (c.hourly || []).slice(0, 12).map(function(h){
+            return '<div class="hour-row"><span>' + h.time + '</span><span>' + h.temp + '°</span><span>' + h.precipProb + '% ' + h.precipMm + 'mm</span></div>';
+          }).join('');
+          return '<div class="currency-row"><span>' + c.city + '</span><span>' + s + c.temp + '° (' + c.min + '°...' + c.max + '°)</span></div><div class="hourly-wrap">' + hrs + '</div>';
+        }).join('');
     }
     var wModal = document.getElementById('weatherModal');
     var wLink = document.getElementById('weather-widget');
