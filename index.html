@@ -108,9 +108,8 @@
   .speed-link { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
     .speed-modal {
       position: fixed; inset: 0; z-index: 10000;
-      background: rgba(10,8,14,0.85);
+      background: rgba(10,8,14,0.96);
       color: #fff;
-      backdrop-filter: blur(12px);
       display: none;
       align-items: center; justify-content: center;
       flex-direction: column;
@@ -119,8 +118,8 @@
     .speed-modal.open { display: flex; opacity: 1; }
     .speed-modal-close {
       position: absolute; top: 24px; right: 24px;
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+      width: 40px; height: 40px; border-radius: 8px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
       color: #fff; font-size: 20px; cursor: pointer;
     }
     .speed-title {
@@ -613,11 +612,9 @@ if (modal) {
 </div>
 </div>
 <style>
-.tw-card{background:rgba(255,255,255,.30);
-backdrop-filter:blur(16px);
--webkit-backdrop-filter:blur(16px);
+.tw-card{background:rgba(250,248,252,.94);
 border:1px solid rgba(255,255,255,.35);
-border-radius:16px;padding:10px 14px;
+border-radius:12px;padding:10px 14px;
 margin:5px auto;max-width:300px;
 color:rgba(40,35,55,.9);font-family:inherit;
 box-shadow:0 8px 32px rgba(120,90,160,.12);
